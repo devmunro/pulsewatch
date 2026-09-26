@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Activity, ArrowLeft, ArrowRight, Bell, Box, Braces, CircleGauge, Cloud, Code2, ExternalLink, GitBranch, Globe2, LayoutDashboard, LockKeyhole, MoreVertical, Radio, Search, Server, Settings, ShieldCheck, Siren, Sun, Webhook } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -23,9 +23,35 @@ function PulseLogo({ inverse = false }: { inverse?: boolean }) { return <div cla
 function PrimaryButton({ children, onClick, className = "" }: { children: React.ReactNode; onClick?: () => void; className?: string }) { return <button onClick={onClick} className={`primary-btn ${className}`}>{children}</button> }
 
 function Landing({ openDemo }: { openDemo: () => void }) {
+  const heroArtRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const art = heroArtRef.current;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const desktop = window.matchMedia("(min-width: 901px)");
+    if (!art || reduceMotion.matches || !desktop.matches) return;
+
+    let frame = 0;
+    const updateParallax = () => {
+      frame = 0;
+      const offset = Math.min(window.scrollY * 0.13, 76);
+      art.style.setProperty("--parallax-y", `${offset}px`);
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(updateParallax);
+    };
+
+    updateParallax();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
   return <main className="landing">
     <header className="landing-nav"><PulseLogo/><nav aria-label="Main navigation"><a href="#features">Features</a><button onClick={openDemo}>Demo</button><a href="#stack">Tech Stack</a><a href="#docs">Docs</a></nav><div className="nav-actions"><button className="outline-btn" onClick={openDemo}>Sign in</button><PrimaryButton onClick={openDemo}>Try demo <ArrowRight size={17}/></PrimaryButton></div></header>
-    <section className="hero"><div className="hero-copy"><h1>Uptime<br/>that works<br/>for <em>builders.</em></h1><p>Monitor your websites and APIs, get real-time alerts when something goes down, and see detailed performance insights.</p><div className="hero-actions"><PrimaryButton onClick={openDemo}>Explore live demo <ArrowRight size={17}/></PrimaryButton><a className="outline-btn" href="https://github.com" target="_blank" rel="noreferrer"><GitBranch size={19}/> View on GitHub</a></div></div><img className="hero-art" src="/pulsewatch-mountains.png" alt="Engraved alpine mountain landscape with evergreen trees"/></section>
+    <section className="hero"><div className="hero-copy"><h1>Uptime<br/>that works<br/>for <em>builders.</em></h1><p>Monitor your websites and APIs, get real-time alerts when something goes down, and see detailed performance insights.</p><div className="hero-actions"><PrimaryButton onClick={openDemo}>Explore live demo <ArrowRight size={17}/></PrimaryButton><a className="outline-btn" href="https://github.com" target="_blank" rel="noreferrer"><GitBranch size={19}/> View on GitHub</a></div></div><img ref={heroArtRef} className="hero-art" src="/pulsewatch-mountains.png" alt="Engraved alpine mountain landscape with evergreen trees"/></section>
     <section id="features" className="feature-strip">{landingFeatures.map(([Icon,a,b])=><div className="feature" key={a}><Icon size={25}/><span>{a}<br/>{b}</span></div>)}</section>
     <section id="stack" className="tech-section"><div><h2>Built with real-world<br/><em>technologies.</em></h2><p>A modern, serverless application built on AWS with a focus on security, scalability and minimal running costs.</p></div><div className="tech-grid">{techItems.map(([Icon,a,b])=><article key={a}><Icon/><div><strong>{a}</strong><span>{b}</span></div></article>)}</div><div className="demo-cta"><h2>Try the live demo <i>•</i></h2><p>Explore the dashboard and see real monitoring data.<br/>No account required.</p><div><PrimaryButton onClick={openDemo}>Open demo <ArrowRight size={17}/></PrimaryButton><button className="outline-btn" onClick={openDemo}>Create your own account</button></div></div></section>
   </main>
