@@ -42,11 +42,13 @@ npm run synth
 
 ## AWS setup and deployment
 
-The CDK stack defaults to `eu-west-2`. Before deploying, enable MFA, configure temporary AWS CLI sign-in, bootstrap CDK, and review the proposed changes. Configure account-level AWS Budget alerts separately; they are notifications, not spending caps, and are not created by this stack. PulseWatch is dashboard-only: no email subscription is configured for incident alerts.
+The existing stack is live in `eu-west-2` at [d1kd92no8bklbu.cloudfront.net](https://d1kd92no8bklbu.cloudfront.net/). The public API currently exposes exactly the two selected sites, Davefolio and Highforce. Account-level budget alerts are configured separately; they notify but do not cap spending. PulseWatch is dashboard-only and has no email alert subscription.
 
-The first deployment creates CloudFront, Cognito, API, and data resources. Use the `WebsiteUrl` output as `siteOrigin` and `allowedOrigins` in a second reviewed deployment so Cognito redirect/logout URLs match. To populate the public demo, sign in, create monitors, then create a public status page with the slug `pulsewatch-demo` and select which monitors to expose. Visitors can view published status but cannot manage monitors or trigger checks. Never commit local AWS credentials.
+GitHub Actions authenticates with short-lived OIDC credentials. The private `devmunro/pulsewatch` repository has a `production` environment restricted to `main`; its AWS role trust is pinned to this repository's immutable GitHub owner/repository IDs and that environment. `AWS_DEPLOY_ROLE_ARN` is configured as a GitHub Actions secret. Do not use root credentials or long-lived AWS keys for routine deployment.
 
-The repository is private. Configure the OIDC role trust policy and add `AWS_DEPLOY_ROLE_ARN` as a GitHub Actions secret only after reviewing the permissions. The manual deployment workflow asks for the production site origin; it does not request an alert email. Use the production environment's approval gate and inspect the `cdk diff` output before approving a deployment.
+To deploy, first run **Deploy** from `main` with `deploy` left `false`, review the complete `cdk diff`, then start a separate run with `deploy=true` only after you approve those exact changes. The workflow is pinned to the existing CloudFront origin and eu-west-2. It does not ask for alert email. The existing CDK bootstrap CloudFormation execution role currently has `AdministratorAccess`; the GitHub role can assume only the account's CDK deploy, asset-publishing, and lookup roles, but CloudFormation therefore retains broad account permissions. Review that trade-off before a production deploy.
+
+The public demo is read-only and displays only monitors explicitly selected on the `pulsewatch-demo` public status page. Visitors cannot manage monitors or trigger checks. Never commit local AWS credentials.
 
 ## Design reference
 

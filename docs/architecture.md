@@ -16,9 +16,11 @@ DynamoDB tables have point-in-time recovery and `RETAIN` removal policies. Check
 
 1. Build static assets with `npm run build:aws` from the repo root.
 2. Install infrastructure dependencies and run `npm run build` and `npm run synth` from `infrastructure/`.
-3. Configure AWS CLI with IAM Identity Center SSO, bootstrap CDK in `eu-west-2`, then review `cdk diff` before deploying.
-4. Supply your email and deploy. After first deployment, copy the CloudFront website URL into the `siteOrigin` and `allowedOrigins` CDK context values, then synthesize, review and deploy again so Cognito callback/logout URLs match the hosted site. Confirm the SNS email subscription.
-5. To publish real data to the public dashboard, sign in, add monitors, then create a public status page with slug `pulsewatch-demo` and select only the monitors you intend to share. The guest dashboard is read-only and does not invoke checks; scheduled checks run independently.
-6. Add a GitHub remote and configure GitHub Actions OIDC only after the deployment role trust policy and least-privilege permissions have been reviewed. The workflow intentionally does not create or assume a role for you.
+3. The existing production stack is in `eu-west-2` and serves `https://d1kd92no8bklbu.cloudfront.net`.
+4. GitHub Actions uses the `PulseWatchGitHubDeploy` OIDC role, restricted to this repository's immutable owner/repository IDs and the `production` environment. The production environment only allows `main`; the workflow itself also blocks other refs. The role can assume only the CDK deploy, file-publishing, and lookup roles in this account and region.
+5. Run the manual deployment workflow from `main` with `deploy=false` to review the CDK diff. Start a separate workflow run with `deploy=true` only after reviewing and accepting that diff. The workflow does not request an email address or configure email alerts.
+6. To publish real data to the public dashboard, sign in, add monitors, then create a public status page with slug `pulsewatch-demo` and select only the monitors you intend to share. The guest dashboard is read-only and does not invoke checks; scheduled checks run independently.
+
+The existing CDK bootstrap CloudFormation execution role has the AWS-managed `AdministratorAccess` policy. This means the restricted GitHub OIDC role's effective deployment path can make broad changes through CloudFormation; a dedicated narrower CloudFormation execution policy is a security-hardening follow-up before using the account for other workloads.
 
 Until step 3, tests and synthesis can be run without AWS credentials. Actual deployment is intentionally not performed by local CI.

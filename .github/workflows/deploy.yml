@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       site_origin:
-        description: CloudFront URL or custom domain, e.g. https://d123example.cloudfront.net
+        description: Existing PulseWatch CloudFront URL (change only if you have assigned a custom domain).
         required: true
+        default: https://d1kd92no8bklbu.cloudfront.net
         type: string
       deploy:
         description: Set true only in a second run after reviewing the CDK diff from a preview run.
