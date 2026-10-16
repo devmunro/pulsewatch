@@ -1,10 +1,10 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 
 const publicMonitors = [
-  { monitorId: "portfolio", name: "Portfolio Website", url: "https://davefolio.vercel.app", status: "UP", statusCode: 200, responseTimeMs: 122, uptime7d: 99.99, lastChecked: "2026-10-16T12:00:00Z" },
-  { monitorId: "highforce", name: "Highforce Agency", url: "https://highforce.agency", status: "UP", statusCode: 200, responseTimeMs: 184, uptime7d: 99.97, lastChecked: "2026-10-16T12:00:00Z" },
+  { monitorId: "portfolio", name: "Portfolio Website", url: "https://davefolio.vercel.app", status: "UP", statusCode: 200, responseTimeMs: 122, uptime7d: 99.99, uptimeCoverageHours: 168, lastChecked: "2026-10-16T12:00:00Z" },
+  { monitorId: "highforce", name: "Highforce Agency", url: "https://highforce.agency", status: "UP", statusCode: 200, responseTimeMs: 184, uptime7d: 100, uptimeCoverageHours: 3.5, lastChecked: "2026-10-16T12:00:00Z" },
 ];
-type MockMonitor = { monitorId: string; name: string; url: string; status: string; statusCode?: number; responseTimeMs?: number; uptime7d?: number; lastChecked?: string; enabled?: boolean; intervalMinutes?: number };
+type MockMonitor = { monitorId: string; name: string; url: string; status: string; statusCode?: number; responseTimeMs?: number; uptime7d?: number; uptimeCoverageHours?: number; lastChecked?: string; enabled?: boolean; intervalMinutes?: number };
 
 async function json(route: Route, body: unknown, status = 200) {
   await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
@@ -37,6 +37,8 @@ test("public showcase contains only the two real sites and is read-only", async 
 
   await expect(page.getByRole("row", { name: /Portfolio Website/ })).toContainText("122 ms");
   await expect(page.getByRole("row", { name: /Highforce Agency/ })).toContainText("184 ms");
+  await expect(page.getByRole("row", { name: /Highforce Agency/ })).toContainText("3.5h observed");
+  await expect(page.getByText("Collecting", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Visitor locations" })).toBeVisible();
   await expect(page.locator(".world-map image")).toHaveAttribute("href", "/world-map.svg");
   await expect(page.locator(".world-map > svg")).toHaveAttribute("viewBox", "0 0 360 180");

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import math
 import os
 import re
 import uuid
@@ -153,8 +152,10 @@ def _published_demo() -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
     return page, monitors
 
 
-def _monitor_uptime(monitor_id: str, interval_minutes: int = MIN_INTERVAL) -> float | None:
-    """Calculate seven-day uptime from stored real checks; omit it before data exists."""
+def _monitor_uptime(
+    monitor_id: str, interval_minutes: int = MIN_INTERVAL
+) -> tuple[float | None, float | None]:
+    """Return uptime and the actual observed coverage, capped at the last seven days."""
     cutoff = int((datetime.now(UTC) - timedelta(days=7)).timestamp())
     result = CHECKS().query(
         KeyConditionExpression=Key("monitorId").eq(monitor_id)
@@ -162,13 +163,28 @@ def _monitor_uptime(monitor_id: str, interval_minutes: int = MIN_INTERVAL) -> fl
     )
     checks = result.get("Items", [])
     valid_checks = [item for item in checks if item.get("status") in {"UP", "DOWN"}]
-    expected_checks = math.ceil(7 * 24 * 60 / max(interval_minutes, MIN_INTERVAL))
-    if len(valid_checks) < math.ceil(expected_checks * 0.8):
-        return None
-    return round(100 * sum(item["status"] == "UP" for item in valid_checks) / len(valid_checks), 2)
+    if not valid_checks:
+        return None, None
+    timestamps = [
+        int(str(item["checkedAt"]).split("#", 1)[0])
+        for item in valid_checks
+        if item.get("checkedAt")
+    ]
+    if not timestamps:
+        return None, None
+    coverage_hours = min(
+        7 * 24,
+        max(0.0, (datetime.now(UTC).timestamp() - min(timestamps)) / 3600),
+    )
+    uptime = round(
+        100 * sum(item["status"] == "UP" for item in valid_checks) / len(valid_checks), 2
+    )
+    return uptime, round(coverage_hours, 1)
 
 
-def _public_monitor(item: dict[str, Any], uptime7d: float | None = None) -> dict[str, Any]:
+def _public_monitor(
+    item: dict[str, Any], uptime: tuple[float | None, float | None] = (None, None)
+) -> dict[str, Any]:
     """Project a private monitor record to fields safe for its public status view."""
     from urllib.parse import urlsplit
 
@@ -186,8 +202,10 @@ def _public_monitor(item: dict[str, Any], uptime7d: float | None = None) -> dict
         "responseTimeMs": item.get("lastResponseTimeMs"),
         "lastChecked": item.get("lastCheckedAt"),
     }
-    if uptime7d is not None:
-        public["uptime7d"] = uptime7d
+    uptime_value, coverage_hours = uptime
+    if uptime_value is not None:
+        public["uptime7d"] = uptime_value
+        public["uptimeCoverageHours"] = coverage_hours
     return public
 
 
@@ -366,11 +384,15 @@ def handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
                 {
                     "monitors": [
                         item
-                        | {
-                            "uptime7d": _monitor_uptime(
-                                item["monitorId"], int(item.get("intervalMinutes", 5))
+                        | dict(
+                            zip(
+                                ("uptime7d", "uptimeCoverageHours"),
+                                _monitor_uptime(
+                                    item["monitorId"], int(item.get("intervalMinutes", 5))
+                                ),
+                                strict=True,
                             )
-                        }
+                        )
                         for item in monitors
                     ]
                 },

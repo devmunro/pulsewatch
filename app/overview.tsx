@@ -4,7 +4,7 @@ import { Activity, ExternalLink, Globe2 } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { Incident, Monitor } from "@/lib/pulsewatch-client";
 import { useEffect, useState } from "react";
-import { api, CheckRecord, currentTokens } from "@/lib/pulsewatch-client";
+import { api, CheckRecord, currentTokens, uptimeDisplay } from "@/lib/pulsewatch-client";
 import VisitorMap from "./visitor-map";
 
 type ChartPoint = { time: string; value: number };
@@ -52,12 +52,15 @@ export default function Overview({
   }, [firstMonitorId, isDemo]);
   const chartValues = chart.monitorId === firstMonitorId ? chart.rows : [];
   const chartState = !firstMonitorId ? "empty" : chart.monitorId === firstMonitorId ? chart.state : "loading";
-  const uptime = monitors.map((monitor) => monitor.uptime7d).filter((value): value is number => typeof value === "number");
+  const uptimeMonitors = monitors.filter((monitor) => typeof monitor.uptime7d === "number");
+  const uptime = uptimeMonitors.map((monitor) => monitor.uptime7d!);
+  const uptimeCoverage = uptimeMonitors.length ? Math.min(...uptimeMonitors.map((monitor) => monitor.uptimeCoverageHours ?? 168)) : null;
+  const uptimePeriod = uptimeCoverage == null ? "awaiting checks" : uptimeCoverage >= 167.5 ? "7 days" : uptimeCoverage >= 24 ? `${(uptimeCoverage / 24).toFixed(uptimeCoverage < 48 ? 1 : 0)} days observed` : `${Math.max(1, Math.round(uptimeCoverage))} hours observed`;
   const response = monitors.map((monitor) => monitor.responseTimeMs).filter((value): value is number => typeof value === "number");
   const operational = monitors.length > 0 && monitors.every((monitor) => monitor.status === "UP");
   const stats = [
     [String(monitors.length), "Monitors"],
-    [uptime.length ? `${(uptime.reduce((sum, value) => sum + value, 0) / uptime.length).toFixed(2)}%` : "Collecting", "Uptime (7 days)"],
+    [uptime.length ? `${(uptime.reduce((sum, value) => sum + value, 0) / uptime.length).toFixed(2)}%` : "—", `Average uptime · ${uptimePeriod}`],
     [response.length ? `${Math.round(response.reduce((sum, value) => sum + value, 0) / response.length)} ms` : "—", "Avg. response time"],
     [String(incidents.filter((incident) => incident.status !== "RESOLVED").length), "Active incidents"],
   ];
@@ -72,6 +75,6 @@ export default function Overview({
     {isDemo && monitors.length === 0 && <div className="empty-panel"><Globe2 size={36}/><h2>No real monitors published yet</h2><p>The public demo is being set up. Refresh shortly, or sign in to manage your own monitors.</p><button className="primary-btn" onClick={signIn}>Sign in</button></div>}
     <section className="panel chart-panel"><div className="panel-title"><strong>Response time{monitors[0] ? ` · ${monitors[0].name}` : ""}</strong><span>{isDemo ? "Real check history" : "Monitor history"}</span></div><div className="chart-wrap">{chartState === "ready" ? <ResponsiveContainer width="100%" height="100%"><AreaChart data={chartValues} margin={{top:8,right:4,left:-22,bottom:0}}><defs><linearGradient id="overview-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#13814b" stopOpacity={.28}/><stop offset="100%" stopColor="#13814b" stopOpacity={.04}/></linearGradient></defs><CartesianGrid stroke="#e7e4dc"/><XAxis dataKey="time" tick={{fontSize:11,fill:"#5f625f"}} tickLine={false} axisLine={false} interval="preserveStartEnd"/><YAxis tick={{fontSize:11,fill:"#5f625f"}} tickLine={false} axisLine={false} unit=" ms"/><Tooltip/><Area type="monotone" dataKey="value" stroke="#0f7a44" strokeWidth={2} fill="url(#overview-fill)"/></AreaChart></ResponsiveContainer> : <div className="chart-empty" role={chartState === "error" ? "alert" : "status"}>{chartState === "loading" ? "Loading real response-time history…" : chartState === "error" ? "Could not load response-time history. Check the API connection and retry." : "Real response-time history will appear after the first monitor checks."}</div>}</div></section>
     {isDemo && <VisitorMap/>}
-    <section><h2 className="section-title">Monitors</h2>{monitors.length === 0 ? <p className="empty-copy">No public monitors are available yet.</p> : <div className="table-wrap"><table><thead><tr><th>Name</th><th>Status</th><th>Response time</th><th>Uptime (7d)</th><th>Last checked</th><th/></tr></thead><tbody>{monitors.map((monitor) => <tr key={monitor.monitorId} onClick={() => { onSelect(monitor.monitorId); setView("detail"); }}><td><strong>{monitor.name}</strong></td><td><StatusBadge status={monitor.status}/></td><td>{monitor.responseTimeMs == null ? "—" : `${monitor.responseTimeMs} ms`}</td><td>{monitor.uptime7d == null ? "Collecting" : `${monitor.uptime7d.toFixed(2)}%`}</td><td>{checkedLabel(monitor.lastChecked || (monitor as Monitor & {lastCheckedAt?: string}).lastCheckedAt)}</td><td><ExternalLink size={15}/></td></tr>)}</tbody></table></div>}</section>
+    <section><h2 className="section-title">Monitors</h2>{monitors.length === 0 ? <p className="empty-copy">No public monitors are available yet.</p> : <div className="table-wrap"><table><thead><tr><th>Name</th><th>Status</th><th>Response time</th><th>Uptime / history</th><th>Last checked</th><th/></tr></thead><tbody>{monitors.map((monitor) => { const uptimeInfo = uptimeDisplay(monitor); return <tr key={monitor.monitorId} onClick={() => { onSelect(monitor.monitorId); setView("detail"); }}><td><strong>{monitor.name}</strong></td><td><StatusBadge status={monitor.status}/></td><td>{monitor.responseTimeMs == null ? "—" : `${monitor.responseTimeMs} ms`}</td><td title={uptimeInfo.label}>{uptimeInfo.value} <small>{uptimeInfo.label.replace("Uptime ", "")}</small></td><td>{checkedLabel(monitor.lastChecked || (monitor as Monitor & {lastCheckedAt?: string}).lastCheckedAt)}</td><td><ExternalLink size={15}/></td></tr>;})}</tbody></table></div>}</section>
   </div>;
 }

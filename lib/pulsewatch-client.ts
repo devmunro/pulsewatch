@@ -6,6 +6,7 @@ export type Monitor = {
   statusCode?: number;
   responseTimeMs?: number;
   uptime7d?: number;
+  uptimeCoverageHours?: number;
   lastChecked?: string;
   enabled?: boolean;
   intervalMinutes?: number;
@@ -13,6 +14,24 @@ export type Monitor = {
   response?: string;
   checked?: string;
 };
+
+export function uptimeDisplay(monitor: Pick<Monitor, "uptime7d" | "uptimeCoverageHours">) {
+  if (typeof monitor.uptime7d !== "number") {
+    return { value: "—", label: "Uptime (awaiting checks)" };
+  }
+  const hours = monitor.uptimeCoverageHours ?? 168;
+  const period = hours >= 167.5
+    ? "7d"
+    : hours >= 24
+      ? `${(hours / 24).toFixed(hours < 48 ? 1 : 0)}d observed`
+      : hours >= 1
+        ? `${hours.toFixed(hours < 10 ? 1 : 0)}h observed`
+        : "<1h observed";
+  return {
+    value: `${monitor.uptime7d.toFixed(2)}%`,
+    label: hours >= 167.5 ? "Uptime (7d)" : `Uptime (${period})`,
+  };
+}
 export type Incident = {
   incidentId?: string;
   startedAt: string;

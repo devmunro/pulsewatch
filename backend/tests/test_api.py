@@ -1,6 +1,7 @@
 import importlib
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -67,15 +68,26 @@ def test_demo_returns_only_owner_published_monitors_and_safe_fields(api, monkeyp
     ]
 
 
-def test_uptime_is_not_claimed_until_seven_day_history_is_sufficient(api, monkeypatch):
+def test_uptime_uses_available_real_checks_and_reports_coverage(api, monkeypatch):
     checks = Mock()
+    now = int(datetime.now(UTC).timestamp())
     checks.query.return_value = {
-        "Items": [{"status": "UP"}] * 806 + [{"status": "DOWN"}] * 807
+        "Items": [
+            {"status": "UP", "checkedAt": f"{now - 3600:010d}#up"}
+        ] * 806
+        + [{"status": "DOWN", "checkedAt": f"{now - 3600:010d}#down"}] * 807
     }
     monkeypatch.setattr(api, "CHECKS", lambda: checks)
-    assert api._monitor_uptime("monitor") == 49.97
-    checks.query.return_value = {"Items": [{"status": "UP"}] * 2}
-    assert api._monitor_uptime("new-monitor") is None
+    assert api._monitor_uptime("monitor") == (49.97, 1.0)
+    checks.query.return_value = {
+        "Items": [
+            {"status": "UP", "checkedAt": f"{now - 1800:010d}#one"},
+            {"status": "UP", "checkedAt": f"{now - 900:010d}#two"},
+        ]
+    }
+    assert api._monitor_uptime("new-monitor") == (100.0, 0.5)
+    checks.query.return_value = {"Items": []}
+    assert api._monitor_uptime("empty-monitor") == (None, None)
 
 
 def test_demo_check_history_requires_a_published_monitor(api, monkeypatch):
