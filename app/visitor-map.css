@@ -1,0 +1,27 @@
+.visitor-panel{background:#fffefa;border:1px solid #dfdcd4;border-radius:6px;padding:18px;margin:0 0 22px}
+.visitor-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.visitor-heading h2{font:500 24px Georgia,serif;margin:0}
+.visitor-heading p{color:#626660;font-size:12px;margin:5px 0 0}
+.visitor-total{text-align:right}
+.visitor-total strong,.visitor-total small{display:block}
+.visitor-total strong{font-size:22px;color:#087842}
+.visitor-total small{font-size:11px;color:#626660}
+.visitor-content{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(220px,.8fr);gap:22px;align-items:center}
+.world-map{height:220px;position:relative;border-radius:5px;background:linear-gradient(180deg,#f5f4ef,#fbfaf6);overflow:hidden}
+.world-map svg{width:100%;height:100%}
+.world-map .land{fill:#d9ddd5;stroke:#c5cbc2;stroke-width:.45}
+.map-dot{fill:#087842;stroke:#fffefa;stroke-width:.65}
+.map-pulse{fill:#13814b;opacity:.17}
+.map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:9px;color:#666b66;font-size:13px}
+.map-error{color:#8e281b;background:#fffefa9c}
+.visitor-breakdown ul{list-style:none;margin:12px 0 0;padding:0}
+.visitor-breakdown li{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid #ebe8e1;font-size:12px}
+.visitor-breakdown li span{display:flex;align-items:center;gap:8px}
+.visitor-breakdown li i{width:8px;height:8px;border-radius:50%;background:#118047}
+.visitor-breakdown li strong{font-variant-numeric:tabular-nums}
+.site-counts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.site-counts span{display:flex;flex-direction:column;gap:4px;background:#f5f4ef;border-radius:4px;padding:9px;font-size:11px;color:#61645f}
+.site-counts strong{font-size:16px;color:#18241d}
+.visitor-install-hint{font-size:12px;line-height:1.55;color:#61645f;margin:15px 0}
+.visitor-more{display:block;color:#666;margin-top:8px;font-size:11px}
+@media(max-width:640px){.visitor-content{grid-template-columns:1fr}.world-map{height:175px}}

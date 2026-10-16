@@ -1,0 +1,57 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      site_origin:
+        description: CloudFront URL or custom domain, e.g. https://d123example.cloudfront.net
+        required: true
+        type: string
+      deploy:
+        description: Set true only in a second run after reviewing the CDK diff from a preview run.
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CDK_DEFAULT_ACCOUNT: "975739936480"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npm run build:aws
+      - run: npm ci
+        working-directory: infrastructure
+      - run: npm run build
+        working-directory: infrastructure
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: eu-west-2
+      - run: npx cdk diff --context "siteOrigin=$SITE_ORIGIN" --context "allowedOrigins=$ALLOWED_ORIGINS"
+        env:
+          SITE_ORIGIN: ${{ inputs.site_origin }}
+          ALLOWED_ORIGINS: ${{ inputs.site_origin }},https://highforce.agency,https://www.highforce.agency,https://davefolio.vercel.app
+        working-directory: infrastructure
+      - name: Deploy reviewed infrastructure changes
+        if: ${{ inputs.deploy }}
+        run: npx cdk deploy --context "siteOrigin=$SITE_ORIGIN" --context "allowedOrigins=$ALLOWED_ORIGINS" --require-approval broadening --outputs-file cdk-outputs.json
+        env:
+          SITE_ORIGIN: ${{ inputs.site_origin }}
+          ALLOWED_ORIGINS: ${{ inputs.site_origin }},https://highforce.agency,https://www.highforce.agency,https://davefolio.vercel.app
+        working-directory: infrastructure

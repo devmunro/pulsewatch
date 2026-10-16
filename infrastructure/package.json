@@ -1,0 +1,21 @@
+{
+  "name": "pulsewatch-infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc --noEmit",
+    "synth": "cdk synth",
+    "diff": "cdk diff"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.19",
+    "aws-cdk": "^2.1100.0",
+    "esbuild": "^0.25.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.245.0",
+    "constructs": "^10.4.2"
+  }
+}

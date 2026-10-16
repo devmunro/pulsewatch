@@ -12,6 +12,7 @@ const { d1, r2 } = hostingConfig;
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const managedLinux = readExecutionProfile() === "managed-linux";
+const pulseWatchApiOrigin = process.env.PULSEWATCH_LOCAL_API_ORIGIN ?? "https://d1kd92no8bklbu.cloudfront.net";
 
 const localBindingConfig = {
   main: "vinext/server/fetch-handler",
@@ -54,6 +55,11 @@ export default defineConfig(async () => {
     server: {
       ...(managedLinux ? { host: "0.0.0.0", allowedHosts: ["terminal.local"] } : {}),
       ...(isCodexSeatbeltSandbox ? { watch: { useFsEvents: false, usePolling: true } } : {}),
+      // Local review uses the deployed public read-only API. Do not proxy owner routes.
+      proxy: {
+        "^/api/demo/": { target: pulseWatchApiOrigin, changeOrigin: true, secure: true },
+        "^/api/status/": { target: pulseWatchApiOrigin, changeOrigin: true, secure: true },
+      },
     },
     plugins: [
       vinext(),

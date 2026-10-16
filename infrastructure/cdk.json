@@ -1,0 +1,7 @@
+{
+  "app": "npx ts-node --prefer-ts-exts bin/pulsewatch.ts",
+  "context": {
+    "siteOrigin": "http://localhost:5173",
+    "allowedOrigins": "http://localhost:5173"
+  }
+}
