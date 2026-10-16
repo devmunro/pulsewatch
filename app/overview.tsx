@@ -26,14 +26,14 @@ export default function Overview({
   monitors,
   incidents,
   isDemo,
-  signIn,
+  onAddMonitor,
 }: {
   setView: (view: "detail") => void;
   onSelect: (id: string) => void;
   monitors: Monitor[];
   incidents: Incident[];
   isDemo: boolean;
-  signIn: () => void;
+  onAddMonitor: () => void;
 }) {
   const [chart, setChart] = useState<{ monitorId: string; rows: ChartPoint[]; state: "ready" | "empty" | "error" }>({ monitorId: "", rows: [], state: "empty" });
   const firstMonitorId = monitors[0]?.monitorId;
@@ -66,15 +66,14 @@ export default function Overview({
   ];
 
   return <div className="page">
-    {isDemo && <span className="demo-pill">● LIVE DEMO · READ ONLY</span>}
     <div className="page-heading">
-      <div><h1>Overview</h1><p>{isDemo ? "Live status and check history for your published websites." : "Your monitoring at a glance."}</p></div>
-      <div className="heading-actions"><span className="all-good">● {monitors.length === 0 ? "No monitors published" : operational ? "All systems operational" : "Some systems need attention"}</span><button className="primary-btn" onClick={signIn}>{isDemo ? "Owner sign in" : "Add a monitor"}</button></div>
+      <div><h1>Overview</h1><p>Live status, response times and visitor locations.</p></div>
+      <div className="heading-actions"><span className="all-good">● {monitors.length === 0 ? "No monitors configured" : operational ? "All systems operational" : "Some systems need attention"}</span>{!isDemo&&<button className="primary-btn" onClick={onAddMonitor}>Add a monitor</button>}</div>
     </div>
     <div className="stats-grid">{stats.map(([value, label], index) => <article key={label}><strong className={index === 1 ? "green" : ""}>{value}</strong><span>{label}</span>{index > 0 && index < 3 && <Activity size={18} />}</article>)}</div>
-    {isDemo && monitors.length === 0 && <div className="empty-panel"><Globe2 size={36}/><h2>No real monitors published yet</h2><p>The public demo is being set up. Refresh shortly, or sign in to manage your own monitors.</p><button className="primary-btn" onClick={signIn}>Sign in</button></div>}
-    <section className="panel chart-panel"><div className="panel-title"><strong>Response time{monitors[0] ? ` · ${monitors[0].name}` : ""}</strong><span>{isDemo ? "Real check history" : "Monitor history"}</span></div><div className="chart-wrap">{chartState === "ready" ? <ResponsiveContainer width="100%" height="100%"><AreaChart data={chartValues} margin={{top:8,right:4,left:-22,bottom:0}}><defs><linearGradient id="overview-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#13814b" stopOpacity={.28}/><stop offset="100%" stopColor="#13814b" stopOpacity={.04}/></linearGradient></defs><CartesianGrid stroke="#e7e4dc"/><XAxis dataKey="time" tick={{fontSize:11,fill:"#5f625f"}} tickLine={false} axisLine={false} interval="preserveStartEnd"/><YAxis tick={{fontSize:11,fill:"#5f625f"}} tickLine={false} axisLine={false} unit=" ms"/><Tooltip/><Area type="monotone" dataKey="value" stroke="#0f7a44" strokeWidth={2} fill="url(#overview-fill)"/></AreaChart></ResponsiveContainer> : <div className="chart-empty" role={chartState === "error" ? "alert" : "status"}>{chartState === "loading" ? "Loading real response-time history…" : chartState === "error" ? "Could not load response-time history. Check the API connection and retry." : "Real response-time history will appear after the first monitor checks."}</div>}</div></section>
-    {isDemo && <VisitorMap/>}
-    <section><h2 className="section-title">Monitors</h2>{monitors.length === 0 ? <p className="empty-copy">No public monitors are available yet.</p> : <div className="table-wrap"><table><thead><tr><th>Name</th><th>Status</th><th>Response time</th><th>Uptime / history</th><th>Last checked</th><th/></tr></thead><tbody>{monitors.map((monitor) => { const uptimeInfo = uptimeDisplay(monitor); return <tr key={monitor.monitorId} onClick={() => { onSelect(monitor.monitorId); setView("detail"); }}><td><strong>{monitor.name}</strong></td><td><StatusBadge status={monitor.status}/></td><td>{monitor.responseTimeMs == null ? "—" : `${monitor.responseTimeMs} ms`}</td><td title={uptimeInfo.label}>{uptimeInfo.value} <small>{uptimeInfo.label.replace("Uptime ", "")}</small></td><td>{checkedLabel(monitor.lastChecked || (monitor as Monitor & {lastCheckedAt?: string}).lastCheckedAt)}</td><td><ExternalLink size={15}/></td></tr>;})}</tbody></table></div>}</section>
+    {isDemo && monitors.length === 0 && <div className="empty-panel"><Globe2 size={36}/><h2>No monitors yet</h2><p>Live checks will appear here when a website or API is added.</p></div>}
+    <section className="panel chart-panel"><div className="panel-title"><strong>Response time{monitors[0] ? ` · ${monitors[0].name}` : ""}</strong><span>Recorded checks</span></div><div className="chart-wrap">{chartState === "ready" ? <ResponsiveContainer width="100%" height="100%"><AreaChart data={chartValues} margin={{top:8,right:4,left:-22,bottom:0}}><defs><linearGradient id="overview-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#13814b" stopOpacity={.28}/><stop offset="100%" stopColor="#13814b" stopOpacity={.04}/></linearGradient></defs><CartesianGrid stroke="#e7e4dc"/><XAxis dataKey="time" tick={{fontSize:11,fill:"#5f625f"}} tickLine={false} axisLine={false} interval="preserveStartEnd"/><YAxis tick={{fontSize:11,fill:"#5f625f"}} tickLine={false} axisLine={false} unit=" ms"/><Tooltip/><Area type="monotone" dataKey="value" stroke="#0f7a44" strokeWidth={2} fill="url(#overview-fill)"/></AreaChart></ResponsiveContainer> : <div className="chart-empty" role={chartState === "error" ? "alert" : "status"}>{chartState === "loading" ? "Loading response-time history…" : chartState === "error" ? "Could not load response-time history. Check the API connection and retry." : "Response-time history will appear after the first checks."}</div>}</div></section>
+    <VisitorMap/>
+    <section><h2 className="section-title">Monitors</h2>{monitors.length === 0 ? <p className="empty-copy">No monitors are configured yet.</p> : <div className="table-wrap"><table><thead><tr><th>Name</th><th>Status</th><th>Response time</th><th>Uptime / history</th><th>Last checked</th><th/></tr></thead><tbody>{monitors.map((monitor) => { const uptimeInfo = uptimeDisplay(monitor); return <tr key={monitor.monitorId} onClick={() => { onSelect(monitor.monitorId); setView("detail"); }}><td><strong>{monitor.name}</strong></td><td><StatusBadge status={monitor.status}/></td><td>{monitor.responseTimeMs == null ? "—" : `${monitor.responseTimeMs} ms`}</td><td title={uptimeInfo.label}>{uptimeInfo.value} <small>{uptimeInfo.label.replace("Uptime ", "")}</small></td><td>{checkedLabel(monitor.lastChecked || (monitor as Monitor & {lastCheckedAt?: string}).lastCheckedAt)}</td><td><ExternalLink size={15}/></td></tr>;})}</tbody></table></div>}</section>
   </div>;
 }

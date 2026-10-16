@@ -19,16 +19,24 @@ async function mockPublicApi(page: Page, analytics: "empty" | "error" = "empty")
   await page.route("**/api/demo/monitors/*/checks", (route) => json(route, { checks: [] }));
 }
 
-async function openDemo(page: Page) {
+async function openLiveMonitoring(page: Page) {
   await page.goto("/");
-  await page.getByRole("button", { name: "Explore live demo" }).click();
+  await page.getByRole("button", { name: "View live monitoring" }).click();
   await expect(page).toHaveURL(/\/dashboard\/$/);
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 }
 
-test("public showcase contains only the two real sites and is read-only", async ({ page }) => {
+test("live monitoring shows real sites and response times without owner sign-in", async ({ page }) => {
   await mockPublicApi(page);
-  await openDemo(page);
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Built with real-world technologies" })).toBeVisible();
+  await expect(page.locator(".landing-nav nav")).toHaveCount(0);
+  const techStrip = await page.locator(".technology-strip").evaluate((element) => element.getBoundingClientRect().bottom);
+  const heroTop = await page.locator(".hero").evaluate((element) => element.getBoundingClientRect().top);
+  expect(techStrip).toBeLessThanOrEqual(heroTop);
+  await page.getByRole("button", { name: "View live monitoring" }).click();
+  await expect(page).toHaveURL(/\/dashboard\/$/);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 
   const mapAsset = await page.request.get("/world-map.svg");
   expect(mapAsset.ok()).toBeTruthy();
@@ -39,9 +47,13 @@ test("public showcase contains only the two real sites and is read-only", async 
   await expect(page.getByRole("row", { name: /Highforce Agency/ })).toContainText("184 ms");
   await expect(page.getByRole("row", { name: /Highforce Agency/ })).toContainText("3.5h observed");
   await expect(page.getByText("Collecting", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".avatar, .demo-user")).toHaveCount(0);
+  await expect(page.getByText(/read.only|no login required|public showcase|live demo/i)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Owner sign in" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Visitor locations" })).toBeVisible();
   await expect(page.locator(".world-map image")).toHaveAttribute("href", "/world-map.svg");
-  await expect(page.locator(".world-map > svg")).toHaveAttribute("viewBox", "0 0 360 180");
+  await expect(page.locator(".world-map > svg")).toHaveAttribute("viewBox", "0 0 360 150");
+  expect(await page.locator(".world-map").evaluate((map) => map.getBoundingClientRect().height)).toBeGreaterThan(250);
   await expect(page.getByText("No page views recorded in the last 30 days")).toBeVisible();
   await expect(page.getByText("Counts are page views, not unique people")).toBeVisible();
   await expect(page.getByText(/sample|seeded/i)).toHaveCount(0);
@@ -54,14 +66,14 @@ test("public showcase contains only the two real sites and is read-only", async 
 
 test("dashboard keeps its route and map after refresh, with a working return-home control", async ({ page }) => {
   await mockPublicApi(page);
-  await openDemo(page);
+  await openLiveMonitoring(page);
   await expect(page.getByRole("heading", { name: "Visitor locations" })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Visitor locations" })).toBeVisible();
   await page.getByRole("button", { name: "Return home" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("button", { name: "Explore live demo" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "View live monitoring" })).toBeVisible();
 });
 
 test("visitor tracker honors the browser opt-out without contacting the collector", async ({ page }) => {
@@ -109,7 +121,7 @@ test("monitor detail, incidents, and public status page navigate correctly", asy
     name: "PulseWatch Live Status",
     monitors: publicMonitors,
   }));
-  await openDemo(page);
+  await openLiveMonitoring(page);
   await page.getByRole("button", { name: "Monitors", exact: true }).click();
   await page.getByRole("button", { name: "Portfolio Website" }).click();
   await expect(page.getByRole("heading", { name: "Portfolio Website" })).toBeVisible();
@@ -126,14 +138,14 @@ test("monitor detail, incidents, and public status page navigate correctly", asy
 
 test("visitor API error is not presented as zero visits or a deployment problem", async ({ page }) => {
   await mockPublicApi(page, "error");
-  await openDemo(page);
+  await openLiveMonitoring(page);
   await expect(page.getByText("Visitor analytics is temporarily unavailable")).toBeVisible();
   await expect(page.getByText("Could not load visitor counts from AWS.")).toBeVisible();
   await expect(page.getByText("No page views recorded in the last 30 days")).toHaveCount(0);
   await expect(page.getByRole("row", { name: /Portfolio Website/ })).toBeVisible();
 });
 
-test("owner can create and edit monitors and publish a read-only status page", async ({ page }) => {
+test("owner can create and edit monitors and configure the status page", async ({ page }) => {
   let monitors: MockMonitor[] = [{ ...publicMonitors[0], enabled: true, intervalMinutes: 5 }];
   let statusPage: { name: string; slug: string; monitorIds: string[] } | null = null;
   await page.route("**/api/monitors", async (route) => {
@@ -164,9 +176,9 @@ test("owner can create and edit monitors and publish a read-only status page", a
   await page.route("**/api/status/pulsewatch-demo", (route) => json(route, { name: statusPage?.name, monitors: [] }));
 
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "Explore live demo" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "View live monitoring" })).toBeVisible();
   await page.evaluate(() => sessionStorage.setItem("pulsewatch.tokens", JSON.stringify({ accessToken: "test-access", idToken: "test-id", expiresAt: Date.now() + 60_000 })));
-  await page.getByRole("button", { name: "Explore live demo" }).click();
+  await page.getByRole("button", { name: "View live monitoring" }).click();
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   await page.getByRole("button", { name: "Monitors", exact: true }).click();
   await page.getByRole("button", { name: "Add a monitor" }).click();
@@ -181,10 +193,10 @@ test("owner can create and edit monitors and publish a read-only status page", a
 
   await page.getByRole("button", { name: "Status Page", exact: true }).click();
   await page.getByRole("checkbox", { name: "Portfolio Website" }).check();
-  await page.getByRole("button", { name: "Save public selection" }).click();
-  await expect(page.getByText("Your selected real monitors are now shown in the public read-only demo.")).toBeVisible();
-  await page.getByRole("button", { name: "View public page" }).click();
-  await expect(page.getByRole("heading", { name: "PulseWatch live demo" })).toBeVisible();
+  await page.getByRole("button", { name: "Save selection" }).click();
+  await expect(page.getByText("Your selected monitors are now shown on the PulseWatch status page.")).toBeVisible();
+  await page.getByRole("button", { name: "View status page" }).click();
+  await expect(page.getByRole("heading", { name: "PulseWatch" })).toBeVisible();
   await expect(page.getByText("Owner account")).toHaveCount(0);
 });
 
@@ -201,7 +213,7 @@ test("owner sign-in uses Cognito sign-in only and does not expose public registr
 test("dashboard remains usable on a mobile-width viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockPublicApi(page);
-  await openDemo(page);
+  await openLiveMonitoring(page);
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Visitor locations" })).toBeVisible();
 });

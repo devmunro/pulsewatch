@@ -1,0 +1,12 @@
+.landing-nav{grid-template-columns:1fr auto}
+.technology-strip{min-height:132px;padding:18px clamp(24px,5vw,68px);display:grid;grid-template-columns:minmax(190px,1fr) minmax(0,4fr);align-items:center;gap:30px;border-top:1px solid #e7e4dc;border-bottom:1px solid #dedbd2;background:#fffefa}
+.technology-strip-heading h2{font:500 25px/1.05 Georgia,serif;margin:0;letter-spacing:-.02em}
+.technology-strip-heading em{font-style:normal;color:#08773f}
+.tech-logos{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}
+.tech-logo{min-width:0;display:flex;align-items:center;gap:8px;color:#28322d;font-size:10px;font-weight:650;line-height:1.2}
+.tech-logo svg{flex:0 0 30px;width:30px;height:30px;padding:7px;border-radius:6px;background:#f5f4ef;color:#137c49}
+.tech-logo:nth-child(1) svg{color:#ed6c13;background:#fff1e5}.tech-logo:nth-child(2) svg{color:#7651d5;background:#f0ebff}.tech-logo:nth-child(3) svg{color:#2161df;background:#eaf0ff}.tech-logo:nth-child(4) svg{color:#dd2864;background:#fff0f4}.tech-logo:nth-child(5) svg{color:#d52381;background:#fff0f7}.tech-logo:nth-child(6) svg{color:#df2d62;background:#fff0f3}.tech-logo:nth-child(7) svg{color:#2874df;background:#edf4ff}.tech-logo:nth-child(8) svg{color:#202923;background:#edf0ed}
+.owner-footer{border-top:1px solid #ffffff18;padding:16px 8px;display:flex;justify-content:space-between;align-items:center;color:#dbe4df;font-size:12px}
+.app-header .owner-sign-in{margin-left:auto;min-height:38px;padding:0 14px;font-size:12px}
+@media(max-width:1100px){.technology-strip{grid-template-columns:1fr;gap:14px}.technology-strip-heading h2{font-size:22px}.tech-logos{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:12px}}
+@media(max-width:640px){.landing-nav{height:70px;padding:0 14px;gap:8px}.landing-nav .brand{gap:6px;font-size:18px}.landing-nav .brand svg{width:24px}.nav-actions{gap:7px}.nav-actions .outline-btn{display:flex;min-height:38px;padding:0 9px;font-size:11px}.nav-actions .primary-btn{min-height:38px;padding:0 10px;font-size:11px;gap:5px}.technology-strip{padding:17px 18px}.technology-strip-heading h2{font-size:21px}.tech-logos{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 8px}.tech-logo{font-size:10px}.tech-logo svg{flex-basis:28px;width:28px;height:28px}.app-header{gap:9px}.app-header .owner-sign-in{min-height:35px;padding:0 9px;font-size:10px}.app-header>button:not(:first-child){display:flex}.search{min-width:0;padding:0 8px}.app-header .search input{font-size:11px}}
