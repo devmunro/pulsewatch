@@ -14,8 +14,10 @@ type Summary = {
 
 const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
 const coordinates = countryCoordinates as Record<string, { coordinate: [string, string]; name: string }>;
+const mapViewHeight = 150;
 
 function mapPoint(country: string): [number, number] | null {
+  if (country === "AQ") return null;
   const coordinate = coordinates[country]?.coordinate;
   if (!coordinate) return null;
   const [latitude, longitude] = coordinate.map(Number);
@@ -48,8 +50,8 @@ export default function VisitorMap() {
     </div>
     <div className="visitor-content">
       <div className="world-map" role="img" aria-label="World map with markers for countries with recorded visitors">
-        <svg viewBox="0 0 360 180" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
-          <image href="/world-map.svg" x="0" y="0" width="360" height="180" />
+        <svg viewBox={`0 0 360 ${mapViewHeight}`} aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+          <image href="/world-map.svg" x="0" y="0" width="360" height="180" preserveAspectRatio="none" />
           {countries.map(({ country, pageViews }) => {
             const point = mapPoint(country);
             if (!point) return null;

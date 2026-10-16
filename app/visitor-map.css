@@ -1,13 +1,13 @@
-.visitor-panel{background:#fffefa;border:1px solid #dfdcd4;border-radius:6px;padding:18px;margin:0 0 22px}
-.visitor-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.visitor-panel{background:#fffefa;border:1px solid #dfdcd4;border-radius:6px;padding:22px;margin:0 0 22px}
+.visitor-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .visitor-heading h2{font:500 24px Georgia,serif;margin:0}
 .visitor-heading p{color:#626660;font-size:12px;margin:5px 0 0}
 .visitor-total{text-align:right}
 .visitor-total strong,.visitor-total small{display:block}
 .visitor-total strong{font-size:22px;color:#087842}
 .visitor-total small{font-size:11px;color:#626660}
-.visitor-content{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(220px,.8fr);gap:22px;align-items:center}
-.world-map{height:220px;position:relative;border-radius:5px;background:radial-gradient(ellipse at 50% 45%,#f1f0e9 0%,#fbfaf6 72%);overflow:hidden}
+.visitor-content{display:grid;grid-template-columns:minmax(0,2.25fr) minmax(220px,.75fr);gap:24px;align-items:center}
+.world-map{width:100%;aspect-ratio:360/150;min-height:260px;max-height:440px;position:relative;border-radius:5px;background:radial-gradient(ellipse at 50% 45%,#f1f0e9 0%,#fbfaf6 72%);overflow:hidden}
 .world-map svg{width:100%;height:100%;overflow:visible}
 .map-dot{fill:#087842;stroke:#fffefa;stroke-width:.35;vector-effect:non-scaling-stroke}
 .map-pulse{fill:#13814b;opacity:.14}
@@ -23,4 +23,5 @@
 .site-counts strong{font-size:16px;color:#18241d}
 .visitor-install-hint{font-size:12px;line-height:1.55;color:#61645f;margin:15px 0}
 .visitor-more{display:block;color:#666;margin-top:8px;font-size:11px}
-@media(max-width:640px){.visitor-content{grid-template-columns:1fr}.world-map{height:175px}}
+@media(max-width:900px){.visitor-content{grid-template-columns:minmax(0,1.7fr) minmax(200px,.8fr)}.world-map{min-height:230px}}
+@media(max-width:640px){.visitor-panel{padding:16px}.visitor-content{grid-template-columns:1fr}.world-map{min-height:0;max-height:none;aspect-ratio:360/165}}
