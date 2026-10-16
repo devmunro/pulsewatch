@@ -23,18 +23,18 @@ import { api, beginSignIn, CheckRecord, completeSignIn, currentTokens, Incident,
 type View = "landing" | "overview" | "monitors" | "detail" | "incidents" | "status";
 type ChartPoint = {time:string;value:number};
 const techItems = [
-  { name:"AWS Lambda", description:"Serverless checks & API", icon:LambdaIcon.src },
-  { name:"API Gateway", description:"Secure REST API", icon:ApiGatewayIcon.src },
-  { name:"DynamoDB", description:"On-demand monitoring data", icon:DynamoDbIcon.src },
-  { name:"Amazon Cognito", description:"Owner authentication", icon:CognitoIcon.src },
-  { name:"EventBridge", description:"Scheduled checks", icon:EventBridgeIcon.src },
-  { name:"Amazon SNS", description:"Incident notifications", icon:SnsIcon.src },
-  { name:"CloudWatch", description:"Real-time logs & metrics", icon:CloudWatchIcon.src },
-  { name:"Amazon S3", description:"Static frontend hosting", icon:S3Icon.src },
-  { name:"CloudFront", description:"Global content delivery", icon:CloudFrontIcon.src },
+  { name:"AWS Lambda", description:"Serverless checks & API", icon:LambdaIcon },
+  { name:"API Gateway", description:"Secure REST API", icon:ApiGatewayIcon },
+  { name:"DynamoDB", description:"On-demand monitoring data", icon:DynamoDbIcon },
+  { name:"Amazon Cognito", description:"Owner authentication", icon:CognitoIcon },
+  { name:"EventBridge", description:"Scheduled checks", icon:EventBridgeIcon },
+  { name:"Amazon SNS", description:"Incident notifications", icon:SnsIcon },
+  { name:"CloudWatch", description:"Real-time logs & metrics", icon:CloudWatchIcon },
+  { name:"Amazon S3", description:"Static frontend hosting", icon:S3Icon },
+  { name:"CloudFront", description:"Global content delivery", icon:CloudFrontIcon },
   { name:"GitHub Actions", description:"Continuous integration & deploy", path:siGithubactions.path },
-  { name:"Serverless", description:"No always-on servers", icon:LambdaIcon.src },
-  { name:"Real-time monitoring", description:"Live uptime & response times", icon:CloudWatchIcon.src },
+  { name:"Serverless", description:"No always-on servers", icon:LambdaIcon },
+  { name:"Real-time monitoring", description:"Live uptime & response times", icon:CloudWatchIcon },
 ] as const;
 
 function PulseLogo({ inverse = false }: { inverse?: boolean }) { return <div className="brand"><Activity size={28} strokeWidth={1.5}/><strong className={inverse ? "inverse" : ""}>PulseWatch</strong></div> }

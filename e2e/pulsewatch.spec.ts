@@ -37,6 +37,7 @@ test("live monitoring shows real sites and response times without owner sign-in"
   await expect(page.locator(".technology-strip .tech-logo")).toHaveCount(12);
   await expect(page.getByText("Serverless architecture · Real-time monitoring")).toBeVisible();
   await expect(page.locator(".technology-strip img")).toHaveCount(11);
+  expect(await page.locator(".technology-strip img").evaluateAll((images) => images.every((image) => Boolean((image as HTMLImageElement).getAttribute("src"))))).toBeTruthy();
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(await page.evaluate(() => window.innerHeight));
   const techStrip = await page.locator(".technology-strip").evaluate((element) => element.getBoundingClientRect().bottom);
   const heroTop = await page.locator(".hero").evaluate((element) => element.getBoundingClientRect().top);
