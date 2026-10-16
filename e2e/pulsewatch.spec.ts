@@ -30,6 +30,11 @@ test("public showcase contains only the two real sites and is read-only", async 
   await mockPublicApi(page);
   await openDemo(page);
 
+  const mapAsset = await page.request.get("/world-map.svg");
+  expect(mapAsset.ok()).toBeTruthy();
+  expect(mapAsset.headers()["content-type"]).toContain("image/svg+xml");
+  expect(await mapAsset.text()).toContain("<svg");
+
   await expect(page.getByRole("row", { name: /Portfolio Website/ })).toContainText("122 ms");
   await expect(page.getByRole("row", { name: /Highforce Agency/ })).toContainText("184 ms");
   await expect(page.getByRole("heading", { name: "Visitor locations" })).toBeVisible();
