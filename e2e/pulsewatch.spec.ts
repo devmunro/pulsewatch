@@ -32,7 +32,10 @@ test("live monitoring shows real sites and response times without owner sign-in"
   await expect(page.getByRole("heading", { name: "Built with real-world technologies" })).toBeVisible();
   await expect(page.locator(".landing-nav nav")).toHaveCount(0);
   await expect(page.locator(".landing-nav .nav-actions")).toHaveCount(1);
-  await expect(page.locator(".landing-nav").getByRole("button", { name: "Owner sign in" })).toBeVisible();
+  const ownerSignIn = page.locator(".landing-nav").getByRole("button", { name: "Owner sign in" });
+  await expect(ownerSignIn).toBeVisible();
+  const signInX = await ownerSignIn.evaluate((button) => button.getBoundingClientRect().left);
+  expect(signInX).toBeGreaterThan((await page.evaluate(() => window.innerWidth)) * 0.7);
   await expect(page.locator(".landing-nav").getByRole("button", { name: /Live monitoring/ })).toHaveCount(0);
   await expect(page.locator(".technology-strip .tech-logo")).toHaveCount(12);
   await expect(page.getByText("Serverless architecture · Real-time monitoring")).toBeVisible();
