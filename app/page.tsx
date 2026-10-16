@@ -1,19 +1,41 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Activity, ArrowLeft, ArrowRight, Box, CircleGauge, Cloud, Code2, ExternalLink, GitBranch, Globe2, LayoutDashboard, LockKeyhole, Radio, Search, Server, ShieldCheck, Siren, Webhook } from "lucide-react";
+import { Activity, ArrowLeft, ArrowRight, CircleGauge, ExternalLink, Globe2, LayoutDashboard, Search, Siren } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from "next/image";
+import LambdaIcon from "@aws-icons/svg/icons/architecture-service/aws-lambda.svg";
+import ApiGatewayIcon from "@aws-icons/svg/icons/architecture-service/amazon-api-gateway.svg";
+import DynamoDbIcon from "@aws-icons/svg/icons/architecture-service/amazon-dynamo-db.svg";
+import CognitoIcon from "@aws-icons/svg/icons/architecture-service/amazon-cognito.svg";
+import EventBridgeIcon from "@aws-icons/svg/icons/architecture-service/amazon-event-bridge.svg";
+import SnsIcon from "@aws-icons/svg/icons/architecture-service/amazon-simple-notification-service.svg";
+import CloudWatchIcon from "@aws-icons/svg/icons/architecture-service/amazon-cloud-watch.svg";
+import S3Icon from "@aws-icons/svg/icons/architecture-service/amazon-simple-storage-service.svg";
+import CloudFrontIcon from "@aws-icons/svg/icons/architecture-service/amazon-cloud-front.svg";
+import { siGithubactions } from "simple-icons";
 import Overview from "./overview";
 import { api, beginSignIn, CheckRecord, completeSignIn, currentTokens, Incident, Monitor, signOut, uptimeDisplay } from "@/lib/pulsewatch-client";
 
 type View = "landing" | "overview" | "monitors" | "detail" | "incidents" | "status";
 type ChartPoint = {time:string;value:number};
-const landingFeatures: Array<[typeof Activity, string, string]> = [[Radio,"Real-time","monitoring"],[ShieldCheck,"Reliable","alerts"],[Box,"Built on","AWS serverless"],[LockKeyhole,"Open source","& customizable"]];
-const techItems: Array<[typeof Activity, string, string]> = [[Code2,"AWS Lambda","Serverless functions"],[Webhook,"API Gateway","Secure REST API"],[Server,"DynamoDB","Monitoring data"],[ShieldCheck,"Cognito","Owner authentication"],[Activity,"EventBridge","Scheduled checks"],[Siren,"SNS","Incident event routing"],[Cloud,"CloudWatch","Logging & metrics"],[GitBranch,"GitHub Actions","CI/CD deployment"]];
+const techItems = [
+  { name:"AWS Lambda", description:"Serverless checks & API", icon:LambdaIcon.src },
+  { name:"API Gateway", description:"Secure REST API", icon:ApiGatewayIcon.src },
+  { name:"DynamoDB", description:"On-demand monitoring data", icon:DynamoDbIcon.src },
+  { name:"Amazon Cognito", description:"Owner authentication", icon:CognitoIcon.src },
+  { name:"EventBridge", description:"Scheduled checks", icon:EventBridgeIcon.src },
+  { name:"Amazon SNS", description:"Incident notifications", icon:SnsIcon.src },
+  { name:"CloudWatch", description:"Real-time logs & metrics", icon:CloudWatchIcon.src },
+  { name:"Amazon S3", description:"Static frontend hosting", icon:S3Icon.src },
+  { name:"CloudFront", description:"Global content delivery", icon:CloudFrontIcon.src },
+  { name:"GitHub Actions", description:"Continuous integration & deploy", path:siGithubactions.path },
+  { name:"Serverless", description:"No always-on servers", icon:LambdaIcon.src },
+  { name:"Real-time monitoring", description:"Live uptime & response times", icon:CloudWatchIcon.src },
+] as const;
 
 function PulseLogo({ inverse = false }: { inverse?: boolean }) { return <div className="brand"><Activity size={28} strokeWidth={1.5}/><strong className={inverse ? "inverse" : ""}>PulseWatch</strong></div> }
 function PrimaryButton({ children, onClick, className = "" }: { children: React.ReactNode; onClick?: () => void; className?: string }) { return <button onClick={onClick} className={`primary-btn ${className}`}>{children}</button> }
@@ -46,10 +68,9 @@ function Landing({ openDemo, signIn }: { openDemo: () => void; signIn: () => voi
   }, []);
 
   return <main className="landing">
-    <header className="landing-nav"><PulseLogo/><div className="nav-actions"><button className="outline-btn" onClick={signIn}>Owner sign in</button><PrimaryButton onClick={openDemo}>Live monitoring <ArrowRight size={17}/></PrimaryButton></div></header>
-    <section className="technology-strip" aria-label="PulseWatch technology stack"><div className="technology-strip-heading"><h2>Built with real-world<br/><em>technologies.</em></h2></div><div className="tech-logos">{techItems.map(([Icon,name,description])=><div className="tech-logo" key={name} title={description}><Icon aria-hidden="true"/><span>{name}</span></div>)}</div></section>
-    <section className="hero"><div className="hero-copy"><h1>Uptime<br/>that works<br/>for <em>builders.</em></h1><p>Monitor websites and APIs in real time. See live status, response times, incidents and visitor locations in one place.</p><div className="hero-actions"><PrimaryButton onClick={openDemo}>View live monitoring <ArrowRight size={17}/></PrimaryButton></div></div><Image ref={heroArtRef} fill priority sizes="(max-width: 900px) 100vw, 72vw" unoptimized className="hero-art" src="/pulsewatch-mountains.png" alt="Engraved alpine mountain landscape with evergreen trees"/></section>
-    <section className="feature-strip" aria-label="Monitoring features">{landingFeatures.map(([Icon,a,b])=><div className="feature" key={a}><Icon size={25}/><span>{a}<br/>{b}</span></div>)}</section>
+    <header className="landing-nav"><PulseLogo/><div className="nav-actions"><button className="outline-btn" onClick={signIn}>Owner sign in</button></div></header>
+    <section className="technology-strip" aria-label="PulseWatch technology stack"><div className="technology-strip-heading"><h2>Built with real-world technologies.</h2><p>Serverless architecture · Real-time monitoring</p></div><div className="tech-logos">{techItems.map(item=><div className="tech-logo" key={item.name} title={item.description}>{"icon" in item?<Image src={item.icon} alt="" aria-hidden="true" width={48} height={48} unoptimized/>:<svg aria-hidden="true" viewBox="0 0 24 24"><path d={item.path}/></svg>}<span>{item.name}</span></div>)}</div></section>
+    <section className="hero"><div className="hero-copy"><h1>Uptime<br/>that works<br/>for <em>builders.</em></h1><p>Monitor websites and APIs in real time. See live status, response times, incidents and visitor locations in one place.</p><div className="hero-actions"><PrimaryButton onClick={openDemo}>View live monitoring <ArrowRight size={19}/></PrimaryButton></div></div><Image ref={heroArtRef} fill priority sizes="(max-width: 900px) 100vw, 72vw" unoptimized className="hero-art" src="/pulsewatch-mountains.png" alt="Engraved alpine mountain landscape with evergreen trees"/></section>
   </main>
 }
 

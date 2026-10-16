@@ -8,5 +8,25 @@
 .tech-logo:nth-child(1) svg{color:#ed6c13;background:#fff1e5}.tech-logo:nth-child(2) svg{color:#7651d5;background:#f0ebff}.tech-logo:nth-child(3) svg{color:#2161df;background:#eaf0ff}.tech-logo:nth-child(4) svg{color:#dd2864;background:#fff0f4}.tech-logo:nth-child(5) svg{color:#d52381;background:#fff0f7}.tech-logo:nth-child(6) svg{color:#df2d62;background:#fff0f3}.tech-logo:nth-child(7) svg{color:#2874df;background:#edf4ff}.tech-logo:nth-child(8) svg{color:#202923;background:#edf0ed}
 .owner-footer{border-top:1px solid #ffffff18;padding:16px 8px;display:flex;justify-content:space-between;align-items:center;color:#dbe4df;font-size:12px}
 .app-header .owner-sign-in{margin-left:auto;min-height:38px;padding:0 14px;font-size:12px}
+/* Keep the landing experience to one viewport on desktop. */
+@media(min-width:1101px) and (min-height:680px){
+  .landing{height:100svh;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+  .landing-nav{height:68px;min-height:68px}
+  .technology-strip{min-height:0;padding:14px clamp(24px,5vw,68px) 17px;display:flex;flex-direction:column;align-items:stretch;gap:12px}
+  .technology-strip-heading{display:flex;align-items:baseline;justify-content:space-between;gap:20px}
+  .technology-strip-heading h2{font-size:24px;white-space:nowrap}
+  .technology-strip-heading p{margin:0;color:#5c625e;font-size:13px}
+  .tech-logos{width:100%;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+  .tech-logo{min-height:53px;padding:5px 8px;border:1px solid #ebe8e0;border-radius:6px;background:#fffefa;font-size:11px;gap:9px}
+  .tech-logo img,.tech-logo svg{flex:0 0 42px;width:42px;height:42px;object-fit:contain;padding:0;border-radius:0;background:transparent}
+  .tech-logo svg{padding:8px;border-radius:7px;background:#f0f0ed;color:#252a27}
+  .hero{flex:1;min-height:0}
+  .hero-copy{padding-top:20px;padding-bottom:20px}
+  .hero-copy h1{font-size:clamp(55px,4.8vw,76px);margin-bottom:19px}
+  .hero-copy p{font-size:16px;margin-bottom:24px}
+  .hero-actions .primary-btn{min-height:52px;padding:0 26px;font-size:15px}
+}
 @media(max-width:1100px){.technology-strip{grid-template-columns:1fr;gap:14px}.technology-strip-heading h2{font-size:22px}.tech-logos{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:12px}}
 @media(max-width:640px){.landing-nav{height:70px;padding:0 14px;gap:8px}.landing-nav .brand{gap:6px;font-size:18px}.landing-nav .brand svg{width:24px}.nav-actions{gap:7px}.nav-actions .outline-btn{display:flex;min-height:38px;padding:0 9px;font-size:11px}.nav-actions .primary-btn{min-height:38px;padding:0 10px;font-size:11px;gap:5px}.technology-strip{padding:17px 18px}.technology-strip-heading h2{font-size:21px}.tech-logos{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 8px}.tech-logo{font-size:10px}.tech-logo svg{flex-basis:28px;width:28px;height:28px}.app-header{gap:9px}.app-header .owner-sign-in{min-height:35px;padding:0 9px;font-size:10px}.app-header>button:not(:first-child){display:flex}.search{min-width:0;padding:0 8px}.app-header .search input{font-size:11px}}
+@media(max-width:1100px){.technology-strip{display:flex;flex-direction:column;align-items:stretch;gap:14px}.technology-strip-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}.technology-strip-heading p{margin:0;color:#5c625e;font-size:12px}.tech-logo{min-height:52px}.tech-logo img,.tech-logo svg{flex:0 0 38px;width:38px;height:38px;object-fit:contain;padding:0;border-radius:0;background:transparent}.tech-logo svg{padding:7px;border-radius:7px;background:#f0f0ed}}
+@media(max-width:640px){.technology-strip-heading{display:block}.technology-strip-heading p{margin-top:7px}.tech-logos{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 7px}.tech-logo{min-height:46px;padding:4px 6px;font-size:9px;gap:6px}.tech-logo img,.tech-logo svg{flex-basis:30px;width:30px;height:30px}.tech-logo svg{padding:5px}.hero-actions .primary-btn{min-height:48px;padding:0 17px;font-size:14px}}
