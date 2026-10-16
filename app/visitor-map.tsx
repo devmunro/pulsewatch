@@ -19,7 +19,7 @@ function mapPoint(country: string): [number, number] | null {
   const coordinate = coordinates[country]?.coordinate;
   if (!coordinate) return null;
   const [latitude, longitude] = coordinate.map(Number);
-  return [8 + ((longitude + 180) / 360) * 86, 8 + ((90 - latitude) / 180) * 84];
+  return [longitude + 180, 90 - latitude];
 }
 
 export default function VisitorMap() {
@@ -48,14 +48,14 @@ export default function VisitorMap() {
     </div>
     <div className="visitor-content">
       <div className="world-map" role="img" aria-label="World map with markers for countries with recorded visitors">
-        <svg viewBox="0 0 100 100" aria-hidden="true" preserveAspectRatio="none">
-          <path className="land" d="M8 23 13 17 20 15 25 19 32 19 35 25 32 30 27 32 25 39 21 42 19 50 16 48 15 41 11 37 9 30ZM26 52 32 53 37 59 39 67 37 75 35 83 32 88 30 78 28 70 25 64ZM43 22 47 19 50 21 49 26 46 28ZM48 30 55 27 61 29 64 26 71 27 77 24 83 28 92 29 94 34 89 37 83 36 80 42 74 43 70 48 65 47 62 53 58 53 57 47 54 44 51 46 49 41 45 39ZM60 51 65 52 68 58 67 65 63 68 60 63ZM77 65 83 66 88 70 91 77 88 83 84 81 82 75 78 72Z" />
+        <svg viewBox="0 0 360 180" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+          <image href="/world-map.svg" x="0" y="0" width="360" height="180" />
           {countries.map(({ country, pageViews }) => {
             const point = mapPoint(country);
             if (!point) return null;
-            const radius = 1.1 + 2.1 * Math.sqrt(pageViews / maximum);
+            const radius = 0.75 + 0.65 * Math.sqrt(pageViews / maximum);
             return <g key={country}>
-              <circle className="map-pulse" cx={point[0]} cy={point[1]} r={radius + 1.8} />
+              <circle className="map-pulse" cx={point[0]} cy={point[1]} r={radius + 1.1} />
               <circle className="map-dot" cx={point[0]} cy={point[1]} r={radius}>
                 <title>{countryNames.of(country) ?? country}: {pageViews.toLocaleString()} views</title>
               </circle>

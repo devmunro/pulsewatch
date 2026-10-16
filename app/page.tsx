@@ -114,6 +114,16 @@ function Dashboard({onSignIn}:{onSignIn:()=>void}) {
   const selected=monitors.find(m=>m.monitorId===selectedId)||monitors[0];
 
   useEffect(()=>{
+    const syncViewToPath=()=>setView(location.pathname.startsWith("/dashboard")?"overview":"landing");
+    window.addEventListener("popstate",syncViewToPath);
+    return()=>window.removeEventListener("popstate",syncViewToPath);
+  },[]);
+  useEffect(()=>{
+    if(view==="landing"&&location.pathname.startsWith("/dashboard"))history.replaceState(history.state,"","/");
+    else if(view!=="landing"&&location.pathname!=="/dashboard/")history.replaceState(history.state,"","/dashboard/");
+  },[view]);
+
+  useEffect(()=>{
     let live=true;
     const token=currentTokens();
     Promise.resolve().then(()=>{if(live){setDemo(!token);setError("")}});
@@ -169,4 +179,4 @@ function Dashboard({onSignIn}:{onSignIn:()=>void}) {
     </div></SidebarInset>
   </SidebarProvider>;
 }
-export default function Home(){const [started,setStarted]=useState(false);const [authError,setAuthError]=useState("");const [publicSlug,setPublicSlug]=useState("");useEffect(()=>{if(location.pathname.startsWith("/auth/callback")){completeSignIn().then(()=>setStarted(true)).catch(e=>{setAuthError(e.message);history.replaceState({},"", "/")})}else{const timer=window.setTimeout(()=>{const match=location.pathname.match(/^\/status\/([^/]+)/);if(match){setPublicSlug(decodeURIComponent(match[1]));setStarted(true)}else if(currentTokens())setStarted(true)},0);return()=>window.clearTimeout(timer)}},[]);const login=()=>beginSignIn().catch(e=>setAuthError(e.message));return <>{authError&&<div className="error-banner auth-error" role="alert">{authError}<button onClick={()=>setAuthError("")}>×</button></div>}{publicSlug?<PublicStatusPage slug={publicSlug}/>:started?<Dashboard onSignIn={login}/>:<Landing openDemo={()=>setStarted(true)} signIn={login}/>}</>}
+export default function Home(){const [started,setStarted]=useState(false);const [authError,setAuthError]=useState("");const [publicSlug,setPublicSlug]=useState("");useEffect(()=>{if(location.pathname.startsWith("/auth/callback")){completeSignIn().then(()=>setStarted(true)).catch(e=>{setAuthError(e.message);history.replaceState({},"", "/")})}else{const syncRoute=()=>{const match=location.pathname.match(/^\/status\/([^/]+)/);setPublicSlug(match?decodeURIComponent(match[1]):"");setStarted(location.pathname.startsWith("/dashboard")||!!currentTokens()||!!match)};const timer=window.setTimeout(syncRoute,0);window.addEventListener("popstate",syncRoute);return()=>{window.clearTimeout(timer);window.removeEventListener("popstate",syncRoute)}}},[]);const login=()=>beginSignIn().catch(e=>setAuthError(e.message));const openDashboard=()=>{if(!location.pathname.startsWith("/dashboard"))history.pushState(history.state,"","/dashboard/");setPublicSlug("");setStarted(true)};return <>{authError&&<div className="error-banner auth-error" role="alert">{authError}<button onClick={()=>setAuthError("")}>×</button></div>}{publicSlug?<PublicStatusPage slug={publicSlug}/>:started?<Dashboard onSignIn={login}/>:<Landing openDemo={openDashboard} signIn={login}/>}</>}

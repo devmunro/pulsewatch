@@ -122,10 +122,12 @@ def test_visitor_count_accepts_only_configured_site_origins(api, monkeypatch):
         "origin": "https://davefolio.vercel.app",
         "cloudfront-viewer-country": "GB",
     }
+    event["requestContext"]["http"]["sourceIp"] = "test-client-ip"
     result = api.handler(event, None)
     assert result["statusCode"] == 202
     assert table.update_item.call_args.kwargs["Key"]["siteId"] == "portfolio"
     assert table.update_item.call_args.kwargs["Key"]["sortKey"].endswith("#GB")
+    assert "test-client-ip" not in repr(table.update_item.call_args.kwargs)
     denied = request("/api/analytics/visit", "POST", '{"siteId":"portfolio"}')
     denied["headers"] = {"origin": "https://attacker.example"}
     assert api.handler(denied, None)["statusCode"] == 403

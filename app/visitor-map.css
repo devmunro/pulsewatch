@@ -7,11 +7,10 @@
 .visitor-total strong{font-size:22px;color:#087842}
 .visitor-total small{font-size:11px;color:#626660}
 .visitor-content{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(220px,.8fr);gap:22px;align-items:center}
-.world-map{height:220px;position:relative;border-radius:5px;background:linear-gradient(180deg,#f5f4ef,#fbfaf6);overflow:hidden}
-.world-map svg{width:100%;height:100%}
-.world-map .land{fill:#d9ddd5;stroke:#c5cbc2;stroke-width:.45}
-.map-dot{fill:#087842;stroke:#fffefa;stroke-width:.65}
-.map-pulse{fill:#13814b;opacity:.17}
+.world-map{height:220px;position:relative;border-radius:5px;background:radial-gradient(ellipse at 50% 45%,#f1f0e9 0%,#fbfaf6 72%);overflow:hidden}
+.world-map svg{width:100%;height:100%;overflow:visible}
+.map-dot{fill:#087842;stroke:#fffefa;stroke-width:.35;vector-effect:non-scaling-stroke}
+.map-pulse{fill:#13814b;opacity:.14}
 .map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:9px;color:#666b66;font-size:13px}
 .map-error{color:#8e281b;background:#fffefa9c}
 .visitor-breakdown ul{list-style:none;margin:12px 0 0;padding:0}

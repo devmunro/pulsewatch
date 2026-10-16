@@ -22,6 +22,7 @@ async function mockPublicApi(page: Page, analytics: "empty" | "error" = "empty")
 async function openDemo(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "Explore live demo" }).click();
+  await expect(page).toHaveURL(/\/dashboard\/$/);
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 }
 
@@ -32,6 +33,8 @@ test("public showcase contains only the two real sites and is read-only", async 
   await expect(page.getByRole("row", { name: /Portfolio Website/ })).toContainText("122 ms");
   await expect(page.getByRole("row", { name: /Highforce Agency/ })).toContainText("184 ms");
   await expect(page.getByRole("heading", { name: "Visitor locations" })).toBeVisible();
+  await expect(page.locator(".world-map image")).toHaveAttribute("href", "/world-map.svg");
+  await expect(page.locator(".world-map > svg")).toHaveAttribute("viewBox", "0 0 360 180");
   await expect(page.getByText("No page views recorded in the last 30 days")).toBeVisible();
   await expect(page.getByText("Counts are page views, not unique people")).toBeVisible();
   await expect(page.getByText(/sample|seeded/i)).toHaveCount(0);
@@ -40,6 +43,57 @@ test("public showcase contains only the two real sites and is read-only", async 
   await expect(page.getByRole("link", { name: "Open Portfolio Website in a new tab" })).toHaveAttribute("href", "https://davefolio.vercel.app");
   await expect(page.getByRole("button", { name: "Add a monitor" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Status Page", exact: true })).toHaveCount(0);
+});
+
+test("dashboard keeps its route and map after refresh, with a working return-home control", async ({ page }) => {
+  await mockPublicApi(page);
+  await openDemo(page);
+  await expect(page.getByRole("heading", { name: "Visitor locations" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Visitor locations" })).toBeVisible();
+  await page.getByRole("button", { name: "Return home" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("button", { name: "Explore live demo" })).toBeVisible();
+});
+
+test("visitor tracker honors the browser opt-out without contacting the collector", async ({ page }) => {
+  let visits = 0;
+  await page.addInitScript(() => localStorage.setItem("pulsewatch-analytics-opt-out", "true"));
+  await page.route("https://d1kd92no8bklbu.cloudfront.net/api/analytics/visit", async (route) => {
+    visits += 1;
+    await route.fulfill({ status: 202, contentType: "application/json", body: '{"accepted":true}' });
+  });
+  await page.goto("/");
+  await page.evaluate(() => new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "/pulsewatch-analytics.js";
+    script.dataset.pulsewatchSite = "portfolio";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Tracker script failed to load"));
+    document.head.append(script);
+  }));
+  expect(visits).toBe(0);
+});
+
+test("visitor tracker posts without a CORS preflight", async ({ page }) => {
+  const requests: { method: string; contentType: string }[] = [];
+  await page.route("https://d1kd92no8bklbu.cloudfront.net/api/analytics/visit", async (route) => {
+    requests.push({ method: route.request().method(), contentType: route.request().headers()["content-type"] || "" });
+    await route.fulfill({ status: 202, contentType: "application/json", body: '{"accepted":true}' });
+  });
+  await page.goto("/");
+  await page.evaluate(() => new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "/pulsewatch-analytics.js";
+    script.dataset.pulsewatchSite = "highforce";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Tracker script failed to load"));
+    document.head.append(script);
+  }));
+  await expect.poll(() => requests).toHaveLength(1);
+  expect(requests[0].method).toBe("POST");
+  expect(requests[0].contentType).toMatch(/^text\/plain/);
 });
 
 test("monitor detail, incidents, and public status page navigate correctly", async ({ page }) => {
