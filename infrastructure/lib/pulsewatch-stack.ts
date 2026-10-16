@@ -206,7 +206,7 @@ export class PulseWatchStack extends Stack {
       code: cloudfront.FunctionCode.fromInline(`function handler(event) {
   var request = event.request;
   var uri = request.uri;
-  if (uri.indexOf('/api/') === 0 || uri.indexOf('/_next/') === 0 || uri === '/favicon.svg' || uri === '/pulsewatch-mountains.png' || uri === '/pulsewatch-analytics.js' || uri === '/index.html') return request;
+  if (uri.indexOf('/api/') === 0 || uri.indexOf('/_next/') === 0 || uri === '/favicon.svg' || uri === '/pulsewatch-mountains.png' || uri === '/pulsewatch-analytics.js' || uri === '/world-map.svg' || uri === '/index.html') return request;
   request.uri = '/index.html';
   return request;
 }`),
