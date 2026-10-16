@@ -1,0 +1,35 @@
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npm run lint
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: python -m pip install -r backend/requirements-dev.txt
+      - run: python -m pytest -q -c backend/pyproject.toml backend/tests
+      - run: python -m ruff check backend/functions backend/tests
+      - run: npm ci
+        working-directory: infrastructure
+      - run: npm run build
+        working-directory: infrastructure
+      - run: npm run synth
+        working-directory: infrastructure
