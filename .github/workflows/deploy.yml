@@ -1,6 +1,10 @@
 name: deploy
 
 on:
+  workflow_run:
+    workflows: [checks]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       site_origin:
@@ -18,20 +22,33 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: pulsewatch-production-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     environment: production
     env:
       CDK_DEFAULT_ACCOUNT: "975739936480"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-python@v5
+          cache-dependency-path: |
+            package-lock.json
+            infrastructure/package-lock.json
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: npm ci
@@ -40,19 +57,20 @@ jobs:
         working-directory: infrastructure
       - run: npm run build
         working-directory: infrastructure
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: eu-west-2
-      - run: npx cdk diff --context "siteOrigin=$SITE_ORIGIN" --context "allowedOrigins=$ALLOWED_ORIGINS"
+      - name: Review infrastructure diff
+        run: npx cdk diff --context "siteOrigin=$SITE_ORIGIN" --context "allowedOrigins=$ALLOWED_ORIGINS"
         env:
-          SITE_ORIGIN: ${{ inputs.site_origin }}
-          ALLOWED_ORIGINS: ${{ inputs.site_origin }},https://highforce.agency,https://www.highforce.agency,https://davefolio.vercel.app
+          SITE_ORIGIN: ${{ inputs.site_origin || 'https://d1kd92no8bklbu.cloudfront.net' }}
+          ALLOWED_ORIGINS: ${{ inputs.site_origin || 'https://d1kd92no8bklbu.cloudfront.net' }},https://highforce.agency,https://www.highforce.agency,https://davefolio.vercel.app
         working-directory: infrastructure
-      - name: Deploy reviewed infrastructure changes
-        if: ${{ inputs.deploy }}
+      - name: Deploy production stack
+        if: ${{ github.event_name == 'workflow_run' || inputs.deploy }}
         run: npx cdk deploy --context "siteOrigin=$SITE_ORIGIN" --context "allowedOrigins=$ALLOWED_ORIGINS" --require-approval broadening --outputs-file cdk-outputs.json
         env:
-          SITE_ORIGIN: ${{ inputs.site_origin }}
-          ALLOWED_ORIGINS: ${{ inputs.site_origin }},https://highforce.agency,https://www.highforce.agency,https://davefolio.vercel.app
+          SITE_ORIGIN: ${{ inputs.site_origin || 'https://d1kd92no8bklbu.cloudfront.net' }}
+          ALLOWED_ORIGINS: ${{ inputs.site_origin || 'https://d1kd92no8bklbu.cloudfront.net' }},https://highforce.agency,https://www.highforce.agency,https://davefolio.vercel.app
         working-directory: infrastructure
