@@ -65,7 +65,8 @@ test("live monitoring shows real sites and response times without owner sign-in"
   await expect(page.locator(".world-map image")).toHaveAttribute("href", "/world-map.svg");
   await expect(page.locator(".world-map > svg")).toHaveAttribute("viewBox", "0 0 360 150");
   expect(await page.locator(".world-map").evaluate((map) => map.getBoundingClientRect().height)).toBeGreaterThan(250);
-  await expect(page.getByText("No page views recorded in the last 30 days")).toBeVisible();
+  await expect(page.locator(".world-map .map-empty")).toHaveCount(0);
+  await expect(page.locator(".visitor-install-hint")).toContainText("No page views yet.");
   await expect(page.getByText("Counts are page views, not unique people")).toBeVisible();
   await expect(page.getByText(/sample|seeded/i)).toHaveCount(0);
 
@@ -85,6 +86,78 @@ test("dashboard keeps its route and map after refresh, with a working return-hom
   await page.getByRole("button", { name: "Return home" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("button", { name: "View live monitoring" })).toBeVisible();
+});
+
+test("monitor search stays aligned with dashboard content as the sidebar toggles", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockPublicApi(page);
+  await openLiveMonitoring(page);
+
+  const search = page.locator(".app-header .search");
+  const pageContent = page.locator(".app-main .page").first();
+  const contentLeft = () => pageContent.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return element.getBoundingClientRect().left + parseFloat(style.paddingLeft);
+  });
+  const assertAligned = async () => {
+    const [searchLeft, contentLeftEdge] = await Promise.all([
+      search.evaluate((element) => element.getBoundingClientRect().left),
+      contentLeft(),
+    ]);
+    expect(Math.abs(searchLeft - contentLeftEdge), JSON.stringify({ searchLeft, contentLeftEdge })).toBeLessThanOrEqual(1);
+  };
+
+  await assertAligned();
+  await page.getByRole("button", { name: "Toggle Sidebar" }).click();
+  await page.waitForTimeout(250);
+  await assertAligned();
+  await page.getByRole("button", { name: "Toggle Sidebar" }).click();
+  await page.waitForTimeout(250);
+  await assertAligned();
+});
+
+test("visitor markers use country centroids and stay inside the Antarctica-cropped map", async ({ page }) => {
+  await mockPublicApi(page);
+  await page.route("**/api/demo/analytics", (route) => json(route, {
+    rangeDays: 30,
+    pageViews: 17,
+    countries: [
+      { country: "GB", pageViews: 8 },
+      { country: "US", pageViews: 6 },
+      { country: "AQ", pageViews: 3 },
+    ],
+    sites: [{ siteId: "portfolio", pageViews: 12 }, { siteId: "highforce", pageViews: 5 }],
+  }));
+  await openLiveMonitoring(page);
+
+  const map = page.locator(".world-map");
+  await expect(map).toHaveAttribute("aria-busy", "false");
+  await expect(map.locator('g[data-country="GB"] .map-dot')).toHaveAttribute("cx", "176.564027");
+  await expect(map.locator('g[data-country="GB"] .map-dot')).toHaveAttribute("cy", "34.621949");
+  await expect(map.locator('g[data-country="US"] .map-dot')).toHaveAttribute("cx", "84.287109");
+  await expect(map.locator('g[data-country="US"] .map-dot')).toHaveAttribute("cy", "52.90976");
+  await expect(map.locator('g[data-country="AQ"]')).toHaveCount(0);
+  await expect(page.getByText("Antarctica: 3 — outside the map's displayed area.")).toBeVisible();
+});
+
+test("visitor map shows a loading status only while analytics is pending", async ({ page }) => {
+  await mockPublicApi(page);
+  let releaseAnalytics!: () => void;
+  const analyticsGate = new Promise<void>((resolve) => { releaseAnalytics = resolve; });
+  await page.route("**/api/demo/analytics", async (route) => {
+    await analyticsGate;
+    await json(route, { rangeDays: 30, pageViews: 0, countries: [], sites: [] });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "View live monitoring" }).click();
+  const map = page.locator(".world-map");
+  try {
+    await expect(map.locator(".map-empty")).toHaveText("Loading visitor locations…");
+  } finally {
+    releaseAnalytics();
+  }
+  await expect(map.locator(".map-empty")).toHaveCount(0);
 });
 
 test("visitor tracker honors the browser opt-out without contacting the collector", async ({ page }) => {
