@@ -13,6 +13,9 @@
 .map-pulse{fill:#13814b;opacity:.14}
 .map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:9px;color:#666b66;font-size:13px}
 .map-error{color:#8e281b;background:#fffefa9c}
+.map-loading-indicator{width:13px;height:13px;border:2px solid #bfd0c4;border-top-color:#087842;border-radius:50%;animation:map-loading-spin .8s linear infinite}
+@keyframes map-loading-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.map-loading-indicator{animation:none}}
 .visitor-breakdown ul{list-style:none;margin:12px 0 0;padding:0}
 .visitor-breakdown li{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid #ebe8e1;font-size:12px}
 .visitor-breakdown li span{display:flex;align-items:center;gap:8px}
