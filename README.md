@@ -1,19 +1,46 @@
 # PulseWatch
 
-PulseWatch is a cost-conscious uptime monitoring product built to match the supplied design reference. The repo includes the screenshot-led landing page, a read-only public dashboard backed by the owner's explicitly published monitors, AWS serverless API/backend, and AWS CDK infrastructure for S3 + CloudFront hosting.
+[![Checks](https://github.com/devmunro/pulsewatch/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/devmunro/pulsewatch/actions/workflows/checks.yml?query=branch%3Amain)
+![AWS](https://img.shields.io/badge/AWS-CDK%20%7C%20Lambda%20%7C%20DynamoDB-232F3E?logo=amazonwebservices&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 
-## Product slices
+PulseWatch is a small personal side project for keeping an eye on my live websites. It checks availability and response times, records incidents, and brings live status and country-level visitor page views into one AWS-backed dashboard. I built it as a hands-on way to use a serverless stack on a project I can actually use.
 
-- Responsive landing page with the supplied alpine artwork and restrained parallax.
-- Read-only demo overview, monitors and incidents served only from the owner's explicitly selected public status page (`pulsewatch-demo`); no fabricated monitor records are shown.
-- Optional, cookie-free page-view counts by country for the portfolio and agency sites. The map remains empty until the tracking snippets are installed and visitors arrive; it never presents sample traffic as real. Counts are page views, not unique people.
-- Cognito authorization-code owner sign-in with PKCE and session-only browser tokens. Public registration is disabled; the dashboard is a read-only personal showcase.
-- Authenticated monitor listing and creation, with owner checks, five-monitor cap, URL SSRF defenses and EventBridge schedules.
-- Python API/checker Lambdas, DynamoDB history/incidents/status-page records, SNS incident messages, CloudWatch logs, and cost budgets.
-- GitHub Actions for Python, frontend, browser, and CDK checks, plus an explicitly manual OIDC deployment workflow.
+The public dashboard currently follows [Davefolio](https://davefolio.vercel.app/) and [Highforce](https://highforce.agency/). The dashboard is read-only for visitors; owner sign-in is used to manage monitors and the status page. Incident history and affected-site details are available in the responsive dashboard on desktop and mobile.
 
-See [architecture](docs/architecture.md) and [security notes](docs/security.md) for the AWS design, cost safeguards, and deployment sequence.
-See [visitor analytics setup](docs/visitor-analytics.md) for the optional site snippets and data handling details.
+**[Open the live dashboard](https://d1kd92no8bklbu.cloudfront.net/)**
+
+## Screenshots
+
+### Landing page
+
+![PulseWatch landing page showing its technology strip and alpine hero design](docs/images/pulsewatch-landing.png)
+
+### Live monitoring dashboard
+
+![PulseWatch overview with uptime, response-time history, incidents, and visitor map](docs/images/pulsewatch-dashboard.png)
+
+## What it does
+
+- Checks configured websites on a schedule and records availability, response time, and status code.
+- Tracks incident start and resolution times and displays incident history alongside monitor status.
+- Publishes a read-only status view for the monitors selected by the owner.
+- Optionally counts aggregate page views by country for sites that include the small PulseWatch tracking script. It records page views, not unique visitors, and the map stays empty until real traffic arrives.
+- Keeps monitor management behind owner sign-in; there is no public registration or public editing.
+- Provides a responsive dashboard so live status and incident details are easy to review from a phone as well as a desktop.
+
+## How it is built
+
+- **Frontend:** Next.js, React, TypeScript, and Recharts; exported as static files.
+- **Hosting:** Amazon S3 and CloudFront.
+- **API and checks:** API Gateway and Python AWS Lambda functions, scheduled with EventBridge Scheduler.
+- **Data:** DynamoDB on-demand tables for monitors, check history, incidents, and visitor counts.
+- **Owner access and operations:** Amazon Cognito for sign-in, CloudWatch for logs, and SNS for incident notification events.
+- **Delivery:** GitHub Actions runs checks and uses short-lived AWS credentials through GitHub OIDC.
+
+See [architecture](docs/architecture.md), [security notes](docs/security.md), and [visitor analytics setup](docs/visitor-analytics.md) for implementation details.
 
 ## Local development
 
@@ -22,7 +49,7 @@ npm ci
 npm run dev
 ```
 
-Then open `http://localhost:5173`. This remains the review/demo frontend. `npm run build` is the existing Vinext preview build; `npm run build:aws` makes the static Next.js export in `out/` used by CDK.
+Open the local URL printed by the dev server (typically `http://localhost:5173`). For a production-style static export, run `npm run build:aws`; this writes the deployable frontend to `out/`.
 
 ## Checks
 
@@ -40,16 +67,18 @@ npm run build
 npm run synth
 ```
 
-## AWS setup and deployment
+GitHub Actions runs the frontend, browser, backend, and infrastructure checks for pull requests and pushes to `main`.
 
-The existing stack is live in `eu-west-2` at [d1kd92no8bklbu.cloudfront.net](https://d1kd92no8bklbu.cloudfront.net/). The public API currently exposes exactly the two selected sites, Davefolio and Highforce. Account-level budget alerts are configured separately; they notify but do not cap spending. PulseWatch is dashboard-only and has no email alert subscription.
+## AWS deployment
 
-GitHub Actions authenticates with short-lived OIDC credentials. The private `devmunro/pulsewatch` repository has a `production` environment restricted to `main`; its AWS role trust is pinned to this repository's immutable GitHub owner/repository IDs and that environment. `AWS_DEPLOY_ROLE_ARN` is configured as a GitHub Actions secret. Do not use root credentials or long-lived AWS keys for routine deployment.
+The production site is hosted at [d1kd92no8bklbu.cloudfront.net](https://d1kd92no8bklbu.cloudfront.net/) in `eu-west-2`. A successful push to `main` automatically triggers the deployment workflow after the checks workflow passes. The workflow builds the static site, prints the CDK diff, and deploys the production stack using GitHub OIDC and the `production` environment.
 
-To deploy, first run **Deploy** from `main` with `deploy` left `false`, review the complete `cdk diff`, then start a separate run with `deploy=true` only after you approve those exact changes. The workflow is pinned to the existing CloudFront origin and eu-west-2. It does not ask for alert email. The existing CDK bootstrap CloudFormation execution role currently has `AdministratorAccess`; the GitHub role can assume only the account's CDK deploy, asset-publishing, and lookup roles, but CloudFormation therefore retains broad account permissions. Review that trade-off before a production deploy.
+The workflow also supports a manual preview/deploy path: a run with `deploy=false` shows the CDK diff without deploying; a separate run with `deploy=true` deploys after the diff has been reviewed. Security-sensitive IAM changes still require CDK approval. Routine deployment does not use root credentials or long-lived AWS keys.
 
-The public demo is read-only and displays only monitors explicitly selected on the `pulsewatch-demo` public status page. Visitors cannot manage monitors or trigger checks. Never commit local AWS credentials.
+AWS Budgets notify the account owner when configured thresholds are reached; they do not cap or automatically stop spending. Serverless usage, CloudFront traffic, data transfer, and logging can incur charges, so check the AWS billing dashboard and budget alerts when operating the stack.
 
-## Design reference
+## Privacy and public data
 
-The supplied PulseWatch screenshots are the visual source of truth. We preserve their warm paper palette, evergreen navigation, topographic mountain hero, metric cards, chart, monitor tables/cards, and product stack section as real React/CSS—not a flattened screenshot.
+The public dashboard exposes only monitors deliberately selected for the public status page. Published monitor details include their site domain, current status, response information, and related incidents. Visitor analytics are aggregate page-view counts by country; see the [analytics notes](docs/visitor-analytics.md) for the tracking behavior and disclosure.
+
+Never put credentials, tokens, or private endpoints in a monitor URL or commit AWS credentials to the repository.
